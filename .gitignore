@@ -3,3 +3,7 @@
 README.rst
 readmelang.py
 runreadmelang.bat
+build/
+dist/
+winput.egg-info/
+*.bat

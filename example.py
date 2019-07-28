@@ -1,4 +1,4 @@
-import winput
+import winput, time
 
 def mouse_callback( event ):
     if event.action == winput.WM_LBUTTONDOWN:
@@ -15,7 +15,14 @@ winput.hook_mouse( mouse_callback )
 winput.hook_keyboard( keyboard_callback )
 
 # enter message loop
-winput.wait_messages()
+try:
+    while 1:
+        time.sleep(1./120)
+        msg = (winput.get_message())
+        if msg:
+            break
+except KeyboardInterrupt:
+    pass
 
 # remove input hook
 winput.unhook_mouse()

@@ -1,4 +1,5 @@
 import ctypes
+from sys import getwindowsversion
 from ctypes import wintypes
 
 class MouseEvent:
@@ -298,6 +299,30 @@ VK_NONAME         =0xFC
 VK_PA1            =0xFD
 VK_OEM_CLEAR      =0xFE
 
+
+QS_KEY            =0x0001
+QS_MOUSEMOVE      =0x0002
+QS_MOUSEBUTTON    =0x0004
+QS_RAWINPUT       =0x0400
+QS_TOUCH          =0x0800
+QS_POINTER        =0x1000
+
+QS_MOUSE = QS_MOUSEMOVE | QS_MOUSEBUTTON
+
+_WINVER = getwindowsversion()
+_WIN32_WINNT = (_WINVER.major << 8) | _WINVER.minor
+
+if (_WIN32_WINNT >= 0x602):
+    QS_INPUT = QS_MOUSE | QS_KEY | QS_RAWINPUT | QS_TOUCH | QS_POINTER
+elif (_WIN32_WINNT >= 0x0501):
+    QS_INPUT = QS_MOUSE | QS_KEY | QS_RAWINPUT
+else:
+    QS_INPUT = QS_MOUSE | QS_KEY
+
+PM_NOREMOVE = 0x0000
+PM_REMOVE = 0x0001
+PM_QS_INPUT = (QS_INPUT << 16)
+
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long),
                 ("y", ctypes.c_long)]
@@ -357,6 +382,10 @@ def wait_messages(): # enter message loop
     msg = wintypes.MSG()
     while user32.GetMessageA(ctypes.pointer(msg), None, 0, 0):
         pass
+
+def get_message():
+    msg = wintypes.MSG()
+    return user32.PeekMessageA(ctypes.pointer(msg), None, 0, 0, PM_REMOVE)
 
 def stop(): # stop message loop
     user32.PostQuitMessage(0)

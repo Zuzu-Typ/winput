@@ -21,6 +21,17 @@ LRESULT = ctypes.c_void_p
 
 ULONG_PTR = ctypes.POINTER(ctypes.c_ulong)
 
+INPUT_MOUSE    = 0
+INPUT_KEYBOARD = 1
+INPUT_HARDWARE = 2
+
+KEYEVENTF_EXTENDEDKEY = 0x0001
+KEYEVENTF_KEYUP       = 0x0002
+KEYEVENTF_UNICODE     = 0x0004
+KEYEVENTF_SCANCODE    = 0x0008
+
+MAPVK_VK_TO_VSC = 0
+
 WH_MOUSE_LL = (14)
 
 WH_KEYBOARD_LL = (13)
@@ -122,11 +133,47 @@ VK_INSERT         =0x2D
 VK_DELETE         =0x2E
 VK_HELP           =0x2F
 
-
 VK_LWIN           =0x5B
 VK_RWIN           =0x5C
 VK_APPS           =0x5D
 
+VK_0			  =0x30
+VK_1			  =0x31
+VK_2			  =0x32
+VK_3			  =0x33
+VK_4			  =0x34
+VK_5			  =0x35
+VK_6			  =0x36
+VK_7			  =0x37
+VK_8			  =0x38
+VK_9			  =0x39
+
+VK_A			  =0x41
+VK_B			  =0x42
+VK_C			  =0x43
+VK_D			  =0x44
+VK_E			  =0x45
+VK_F			  =0x46
+VK_G			  =0x47
+VK_H			  =0x48
+VK_I			  =0x49
+VK_J			  =0x4a
+VK_K			  =0x4b
+VK_L			  =0x4c
+VK_M			  =0x4d
+VK_N			  =0x4e
+VK_O			  =0x4f
+VK_P			  =0x50
+VK_Q			  =0x51
+VK_R			  =0x52
+VK_S			  =0x53
+VK_T			  =0x54
+VK_U			  =0x55
+VK_V			  =0x56
+VK_W			  =0x57
+VK_X			  =0x58
+VK_Y			  =0x59
+VK_Z			  =0x5a
 
 VK_SLEEP          =0x5F
 
@@ -323,6 +370,55 @@ PM_NOREMOVE = 0x0000
 PM_REMOVE = 0x0001
 PM_QS_INPUT = (QS_INPUT << 16)
 
+class MOUSEINPUT(ctypes.Structure):
+    _fields_ = (("dx",          wintypes.LONG),
+                ("dy",          wintypes.LONG),
+                ("mouseData",   wintypes.DWORD),
+                ("dwFlags",     wintypes.DWORD),
+                ("time",        wintypes.DWORD),
+                ("dwExtraInfo", ULONG_PTR))
+
+class KEYBDINPUT(ctypes.Structure):
+    _fields_ = (("wVk",         wintypes.WORD),
+                ("wScan",       wintypes.WORD),
+                ("dwFlags",     wintypes.DWORD),
+                ("time",        wintypes.DWORD),
+                ("dwExtraInfo", ULONG_PTR))
+
+    def __init__(self, *args, **kwds):
+        super(KEYBDINPUT, self).__init__(*args, **kwds)
+        # some programs use the scan code even if KEYEVENTF_SCANCODE
+        # isn't set in dwFflags, so attempt to map the correct code.
+        if not self.dwFlags & KEYEVENTF_UNICODE:
+            self.wScan = user32.MapVirtualKeyExW(self.wVk,
+                                                 MAPVK_VK_TO_VSC, 0)
+
+class HARDWAREINPUT(ctypes.Structure):
+    _fields_ = (("uMsg",    wintypes.DWORD),
+                ("wParamL", wintypes.WORD),
+                ("wParamH", wintypes.WORD))
+
+class INPUT(ctypes.Structure):
+    class _INPUT(ctypes.Union):
+        _fields_ = (("ki", KEYBDINPUT),
+                    ("mi", MOUSEINPUT),
+                    ("hi", HARDWAREINPUT))
+    _anonymous_ = ("_input",)
+    _fields_ = (("type",   wintypes.DWORD),
+                ("_input", _INPUT))
+
+LPINPUT = ctypes.POINTER(INPUT)
+
+def _check_count(result, func, args):
+    if result == 0:
+        raise ctypes.WinError(ctypes.get_last_error())
+    return args
+
+user32.SendInput.errcheck = _check_count
+user32.SendInput.argtypes = (wintypes.UINT, # nInputs
+                             LPINPUT,       # pInputs
+                             ctypes.c_int)  # cbSize
+
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long),
                 ("y", ctypes.c_long)]
@@ -368,6 +464,90 @@ keyboard_hook = None
 LLMouseProc = ctypes.CFUNCTYPE(LRESULT, ctypes.c_int, wintypes.WPARAM, ctypes.POINTER(MSLLHOOKSTRUCT))
 LLKeyboardProc = ctypes.CFUNCTYPE(LRESULT, ctypes.c_int, wintypes.WPARAM, ctypes.POINTER(KBDLLHOOKSTRUCT))
 
+def _issue_mouse_event(dwFlags = 0x0001, dx = 0, dy = 0, mouseData = 0x000):
+    me = INPUT(type=INPUT_MOUSE,
+               mi=MOUSEINPUT(dx = dx, dy = dy, dwFlags = dwFlags, mouseData = mouseData))
+    user32.SendInput(1, ctypes.byref(me), ctypes.sizeof(me))
+
+LEFT_MOUSE_BUTTON = LMB = 1
+MIDDLE_MOUSE_BUTTON = MMB = 2
+RIGHT_MOUSE_BUTTON = RMB = 4
+EXTRA_MOUSE_BUTTON1 = XMB1 = 8
+EXTRA_MOUSE_BUTTON2 = XMB2 = 16
+
+def set_mouse_pos(x, y):
+    """set_mouse_pos(x, y) -> success
+Moves the cursor to the given coordinates."""
+    return user32.SetCursorPos(x, y)
+
+def get_mouse_pos():
+    """get_mouse_pos() -> (x, y)
+Getss the current cursor position"""
+    pt = POINT()
+    user32.GetCursorPos(ctypes.byref(pt))
+    return (pt.x, pt.y)
+
+def press_mouse_button(mouse_button=LMB): # presses the given mouse button
+    if(not (LMB <= mouse_button <= XMB2)):
+        raise AssertionError("invalid mouse button")
+    
+    dwFlags = 0x0002 if mouse_button == LMB else \
+              0x0008 if mouse_button == RMB else \
+              0x0020 if mouse_button == MMB else \
+              0x0080
+
+    if dwFlags == 0x0080:
+        mouseData = 0x1 if mouse_button == XMB1 else 0x2
+    else:
+        mouseData = 0
+        
+    _issue_mouse_event(dwFlags, 0, 0, mouseData)
+
+def release_mouse_button(mouse_button=LMB):# releases the given mouse button
+    if(not (LMB <= mouse_button <= XMB2)):
+        raise AssertionError("invalid mouse button")
+    
+    dwFlags = 0x0004 if mouse_button == LMB else \
+              0x0010 if mouse_button == RMB else \
+              0x0040 if mouse_button == MMB else \
+              0x0100
+
+    if dwFlags == 0x0080:
+        mouseData = 0x1 if mouse_button == XMB1 else 0x2
+    else:
+        mouseData = 0
+        
+    _issue_mouse_event(dwFlags, 0, 0, mouseData)
+
+def click_mouse_button(mouse_button=LMB): # presses and releases the given mouse button
+    press_mouse_button(mouse_button)
+    release_mouse_button(mouse_button)
+
+def move_mousewheel(amount, horizontal = False): # moves the mousewheel by the specified amount
+    assert type(amount) == int, "amount has to be an integer"
+    
+    _issue_mouse_event(0x0800 if not horizontal else 0x1000, 0, 0, amount)
+
+def move_mouse(dx, dy): # moves the mouse by the specified amount in pixels
+    assert type(dx) == type(dy) == int, "dx and dy have to be integers"
+    
+    _issue_mouse_event(0x0001, dx, dy, 0)
+
+def press_key(vk_code): # presses the given key
+    x = INPUT(type=INPUT_KEYBOARD,
+              ki=KEYBDINPUT(wVk=vk_code))
+    user32.SendInput(1, ctypes.byref(x), ctypes.sizeof(x))
+
+def release_key(vk_code): # releases the given key
+    x = INPUT(type=INPUT_KEYBOARD,
+              ki=KEYBDINPUT(wVk=vk_code,
+                            dwFlags=KEYEVENTF_KEYUP))
+    user32.SendInput(1, ctypes.byref(x), ctypes.sizeof(x))
+
+def click_key(vk_code): # presses and releases the given key
+    press_key(vk_code)
+    release_key(vk_code)
+
 def hook_mouse(func): # hook onto mouse event queue
     global mouse_hook_func, mouse_hook
     mouse_hook_func = LLMouseProc(lambda x, y, z: _LowLevelMouseProc(x, y, z, func))
@@ -383,7 +563,7 @@ def wait_messages(): # enter message loop
     while user32.GetMessageA(ctypes.pointer(msg), None, 0, 0):
         pass
 
-def get_message():
+def get_message(): # get pending messages
     msg = wintypes.MSG()
     return user32.PeekMessageA(ctypes.pointer(msg), None, 0, 0, PM_REMOVE)
 

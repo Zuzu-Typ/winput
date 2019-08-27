@@ -7,3 +7,4 @@ build/
 dist/
 winput.egg-info/
 *.bat
+track.py

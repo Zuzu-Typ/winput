@@ -13,11 +13,13 @@ To install winput you can use the PyPI:
 
     pip install winput
   
-To use winput in a script, you have to import the package 
-    winput
- using  
+To use winput in a script, you have to import the package `winput` using  
 
     import winput
+  
+or a wildcard import:  
+
+    from winput import *
   
   
   
@@ -31,18 +33,18 @@ There are two ways you can get input from the mouse\.
 2\. You can hook onto the Windows message system to receive an Event every time   
 the state of the mouse changes:  
 
-    winput.hook_mouse( callback_function )
+    hook_mouse( callback_function )
   
 The function will be supplied with a **MouseEvent** as it's only argument\.  
 
     class MouseEvent:
-    	position		# [length-2-tuple] the screen coordinates at which the event occured
-    	action		  	# [int] which type of event occured - can be any of the mouse-wParams
-    	time			# [int] time in ms since system startup
-    	additional_data	# [int] additional information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
-    	type			# [string] = "MouseEvent"
+        position        # [length-2-tuple] the screen coordinates at which the event occured
+        action          # [int] which type of event occured - can be any of the mouse-wParams
+        time            # [int] time in ms since system startup
+        additional_data # [int] additional information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
+        type            # [string] = "MouseEvent"
   
-You **have to run a message loop** to use a hook\! \(see below\)  
+You **have to run a message loop** to use a hook\! \(see *Running a message loop* below\)  
   
 Remember to unhook when you're done capturing by using:  
 
@@ -52,22 +54,22 @@ Remember to unhook when you're done capturing by using:
 The following mouse\-wParams exist:  
 
     
-    winput.WM_MOUSEMOVE      = 0x0200 # the mouse has been moved
+    WM_MOUSEMOVE    = 0x0200 # the mouse has been moved
     
-    winput.WM_LBUTTONDOWN    = 0x0201 # left mouse button pressed
-    winput.WM_LBTTONUP       = 0x0202 # left mouse button released
+    WM_LBUTTONDOWN  = 0x0201 # left mouse button pressed
+    WM_LBTTONUP     = 0x0202 # left mouse button released
     
-    winput.WM_RBUTTONDOWN    = 0x0204 # right mouse button pressed
-    winput.WM_RBUTTONUP      = 0x0205 # right mouse button released
+    WM_RBUTTONDOWN  = 0x0204 # right mouse button pressed
+    WM_RBUTTONUP    = 0x0205 # right mouse button released
     
-    winput.WM_MBUTTONDOWN    = 0x0207 # middle mouse button pressed
-    winput.WM_MBUTTONUP      = 0x0208 # middle mouse button released
+    WM_MBUTTONDOWN  = 0x0207 # middle mouse button pressed
+    WM_MBUTTONUP    = 0x0208 # middle mouse button released
     
-    winput.WM_MOUSEWHEEL     = 0x020A # mouse wheel moved
-    winput.WM_MOUSEHWHEEL    = 0x020E # mouse wheel moved (horizontal)
+    WM_MOUSEWHEEL   = 0x020A # mouse wheel moved
+    WM_MOUSEHWHEEL  = 0x020E # mouse wheel moved (horizontal)
     
-    winput.WM_XBUTTONDOWN    = 0x020B # extra button pressed
-    winput.WM_XBUTTONUP      = 0x020C # extra button released
+    WM_XBUTTONDOWN  = 0x020B # extra button pressed
+    WM_XBUTTONUP    = 0x020C # extra button released
     
   
   
@@ -75,17 +77,17 @@ The following mouse\-wParams exist:
 #### Capturing keyboard input  
 If you want to monitor keyboard input you also have to hook onto the Windows message system\.  
 
-    winput.hook_keyboard( callback_function )
+    hook_keyboard( callback_function )
   
 The function will be supplied with a **KeyboardEvent** as it's only argument\.  
 
     class KeyboardEvent:
-    	action			# [int] which type of event occured - can be any of the keyboard-wParams
-    	vkCode			# [int] virtual key code -- which key has been pressed
-    	time			# [int] time in ms since system startup
-    	type			# [string] = "KeyboardEvent"
+        action  # [int] which type of event occured - can be any of the keyboard-wParams
+        vkCode  # [int] virtual key code -- which key has been pressed
+        time    # [int] time in ms since system startup
+        type    # [string] = "KeyboardEvent"
   
-You **have to run a message loop** to use a hook\! \(see below\)  
+You **have to run a message loop** to use a hook\! \(see *Running a message loop* below\)  
   
 Again, remember to unhook when you're done capturing by using:  
 
@@ -95,16 +97,12 @@ Again, remember to unhook when you're done capturing by using:
 The following keyboard\-wParams exist:  
 
     
-    winput.WM_KEYDOWN               = 0x0100 # key pressed
-    winput.WM_KEYUP                 = 0x0101 # key released
+    WM_KEYDOWN      = 0x0100 # key pressed
+    WM_KEYUP        = 0x0101 # key released
     
-    winput.WM_SYSKEYDOWN            = 0x0104 # system-key pressed
-    winput.WM_SYSKEYUP              = 0x0105 # system-key released
+    WM_SYSKEYDOWN   = 0x0104 # system-key pressed
+    WM_SYSKEYUP     = 0x0105 # system-key released
     
-  
-You can convert the virtual key codes to string using a predefined dict\.  
-
-    winput.all_vk_codes[ vkCode ] -> string
   
   
   
@@ -112,16 +110,31 @@ You can convert the virtual key codes to string using a predefined dict\.
 If you're using a hook, you have to keep updating the Windows messages\.  
 You can either do this by using   
 
-    winput.wait_messages()
+    wait_messages()
   
 to enter an infinite message loop, which you can stop by calling  
 
-    winput.stop()
+    stop()
   
   
-Or you can have your own loop that repeatedly calls  
+Or you can have your own loop that repeatedly \(at least 100x per second\) calls  
 
     get_message()
+  
+  
+  
+#### Virtual Key Codes \(VK codes\)  
+Virtual key codes or vk\_codes are numerical representations of given keys\.  
+To get a list of all virtual key codes, take a look over [here](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)\.  
+All VK codes are members of the main `winput` module and the submodule `winput.vk_codes`\.  
+If you want to import all the VK codes without performing a package\-wide wildcard import, you can use  
+
+    from winput.vk_codes import *
+  
+  
+You can also convert the virtual key codes to a literal representation using a predefined dict\.  
+
+    vk_code_dict.get(vk_code, "Unknown VK code") -> string
   
   
   
@@ -152,17 +165,15 @@ or pressed and released using
 The following mouse buttons exist:  
 
     
-    winput.LEFT_MOUSE_BUTTON 	= winput.LMB 	= 1
-    winput.RIGHT_MOUSE_BUTTON 	= winput.RMB 	= 2
-    winput.MIDDLE_MOUSE_BUTTON 	= winput.MMB 	= 4
-    winput.EXTRA_MOUSE_BUTTON1 	= winput.XMB1 	= 8
-    winput.EXTRA_MOUSE_BUTTON2 	= winput.XMB2 	= 16
+    LEFT_MOUSE_BUTTON   = LMB   = 1
+    RIGHT_MOUSE_BUTTON  = RMB   = 2
+    MIDDLE_MOUSE_BUTTON = MMB   = 4
+    EXTRA_MOUSE_BUTTON1 = XMB1  = 8
+    EXTRA_MOUSE_BUTTON2 = XMB2  = 16
   
   
 The mousewheel can be moved using  
-
-    move_mousewheel(amount, [horizontal = False])
-  
+`move_mousewheel(amount[, horizontal = False])`  
   
 #### Sending keyboard input  
 To press a key, you can use  
@@ -178,9 +189,6 @@ and to press and release it, you can use
     click_key(vk_code)
   
   
-\[vk_code\] is a numerical representation of a given key\.  
-To get a list of all virtual key codes, take a look over [here](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)\.  
-  
   
 ### Example  
 #### Capturing the mouse and keyboard  
@@ -189,16 +197,16 @@ To get a list of all virtual key codes, take a look over [here](https://docs.mic
     import winput
     
     def mouse_callback( event ):
-    	if event.action == winput.WM_LBUTTONDOWN:
-    		print("Left mouse button press at {}".format( event.position ))
-    	
+        if event.action == winput.WM_LBUTTONDOWN:
+            print("Left mouse button press at {}".format( event.position ))
+        
     def keyboard_callback( event ):
-    	if event.vkCode == winput.VK_ESCAPE: # quit on pressing escape
-    		winput.stop()
-    		
+        if event.vkCode == winput.VK_ESCAPE: # quit on pressing escape
+            winput.stop()
+            
     print("Press escape to quit")
-    	
-    # hook input	
+        
+    # hook input    
     winput.hook_mouse( mouse_callback )
     winput.hook_keyboard( keyboard_callback )
     
@@ -212,43 +220,50 @@ To get a list of all virtual key codes, take a look over [here](https://docs.mic
   
 #### Sending input  
 
+    
     import winput
+    from winput.vk_codes import *
     
     import time
     
+    def slow_click(vk_code): # delay each keypress by 1/10 of a second
+        time.sleep(0.1)
+        winput.click_key(vk_code)
+    
     # open the RUN menu (WIN + R)
-    winput.press_key(winput.VK_LWIN)
-    winput.click_key(winput.VK_R)
-    winput.release_key(winput.VK_LWIN)
+    winput.press_key(VK_LWIN)
+    winput.click_key(VK_R)
+    winput.release_key(VK_LWIN)
     
     time.sleep(0.5)
     
     # enter "notepad.exe"
-    winput.click_key(winput.VK_N)
-    winput.click_key(winput.VK_O)
-    winput.click_key(winput.VK_T)
-    winput.click_key(winput.VK_E)
-    winput.click_key(winput.VK_P)
-    winput.click_key(winput.VK_A)
-    winput.click_key(winput.VK_D)
-    winput.click_key(winput.VK_OEM_PERIOD)
-    winput.click_key(winput.VK_E)
-    winput.click_key(winput.VK_X)
-    winput.click_key(winput.VK_E)
-    winput.click_key(winput.VK_RETURN)
+    slow_click(VK_N)
+    slow_click(VK_O)
+    slow_click(VK_T)
+    slow_click(VK_E)
+    slow_click(VK_P)
+    slow_click(VK_A)
+    slow_click(VK_D)
+    slow_click(VK_OEM_PERIOD)
+    slow_click(VK_E)
+    slow_click(VK_X)
+    slow_click(VK_E)
+    slow_click(VK_RETURN)
     
     time.sleep(1)
     
     # enter "hello world"
-    winput.click_key(winput.VK_H)
-    winput.click_key(winput.VK_E)
-    winput.click_key(winput.VK_L)
-    winput.click_key(winput.VK_L)
-    winput.click_key(winput.VK_O)
-    winput.click_key(winput.VK_SPACE)
-    winput.click_key(winput.VK_W)
-    winput.click_key(winput.VK_O)
-    winput.click_key(winput.VK_R)
-    winput.click_key(winput.VK_L)
-    winput.click_key(winput.VK_D)
+    slow_click(VK_H)
+    slow_click(VK_E)
+    slow_click(VK_L)
+    slow_click(VK_L)
+    slow_click(VK_O)
+    slow_click(VK_SPACE)
+    slow_click(VK_W)
+    slow_click(VK_O)
+    slow_click(VK_R)
+    slow_click(VK_L)
+    slow_click(VK_D)
+    
   

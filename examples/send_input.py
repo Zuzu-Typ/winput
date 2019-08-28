@@ -1,39 +1,44 @@
 import winput
+from winput.vk_codes import *
 
 import time
 
+def slow_click(vk_code): # delay each keypress by 1/10 of a second
+    time.sleep(0.1)
+    winput.click_key(vk_code)
+
 # open the RUN menu (WIN + R)
-winput.press_key(winput.VK_LWIN)
-winput.click_key(winput.VK_R)
-winput.release_key(winput.VK_LWIN)
+winput.press_key(VK_LWIN)
+winput.click_key(VK_R)
+winput.release_key(VK_LWIN)
 
 time.sleep(0.5)
 
 # enter "notepad.exe"
-winput.click_key(winput.VK_N)
-winput.click_key(winput.VK_O)
-winput.click_key(winput.VK_T)
-winput.click_key(winput.VK_E)
-winput.click_key(winput.VK_P)
-winput.click_key(winput.VK_A)
-winput.click_key(winput.VK_D)
-winput.click_key(winput.VK_OEM_PERIOD)
-winput.click_key(winput.VK_E)
-winput.click_key(winput.VK_X)
-winput.click_key(winput.VK_E)
-winput.click_key(winput.VK_RETURN)
+slow_click(VK_N)
+slow_click(VK_O)
+slow_click(VK_T)
+slow_click(VK_E)
+slow_click(VK_P)
+slow_click(VK_A)
+slow_click(VK_D)
+slow_click(VK_OEM_PERIOD)
+slow_click(VK_E)
+slow_click(VK_X)
+slow_click(VK_E)
+slow_click(VK_RETURN)
 
 time.sleep(1)
 
 # enter "hello world"
-winput.click_key(winput.VK_H)
-winput.click_key(winput.VK_E)
-winput.click_key(winput.VK_L)
-winput.click_key(winput.VK_L)
-winput.click_key(winput.VK_O)
-winput.click_key(winput.VK_SPACE)
-winput.click_key(winput.VK_W)
-winput.click_key(winput.VK_O)
-winput.click_key(winput.VK_R)
-winput.click_key(winput.VK_L)
-winput.click_key(winput.VK_D)
+slow_click(VK_H)
+slow_click(VK_E)
+slow_click(VK_L)
+slow_click(VK_L)
+slow_click(VK_O)
+slow_click(VK_SPACE)
+slow_click(VK_W)
+slow_click(VK_O)
+slow_click(VK_R)
+slow_click(VK_L)
+slow_click(VK_D)

@@ -1,6 +1,6 @@
 # winput  
 ## Capture and send keyboard and mouse input on Windows  
-**winput** is a small **extension** gives you the ability to **capture** and **send** any **keyboard and mouse input**\.  
+**winput** is a small **extension** that gives you the ability to **capture** and **send** any **keyboard and mouse input**\.  
 It does this by providing a **simple interface** to **user32\.dll**  
   
 ## Tiny documentation  
@@ -9,7 +9,7 @@ It does this by providing a **simple interface** to **user32\.dll**
 **winput** is supposed to **replace** the outdated extension [PyHook](https://pypi.org/project/pyHook/)\.  
   
 ### Using winput  
-To install winput you can use the PyPI:  
+To install winput you can use the [PyPI](https://packaging.python.org/tutorials/installing-packages/):  
 
     pip install winput
   
@@ -39,12 +39,12 @@ The function will be supplied with a **MouseEvent** as it's only argument\.
 
     class MouseEvent:
         position        # [length-2-tuple] the screen coordinates at which the event occured
-        action          # [int] which type of event occured - can be any of the mouse-wParams
+        action          # [int] which type of event occured - can be any of the mouse-wParams (see below)
         time            # [int] time in ms since system startup
-        additional_data # [int] additional information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
+        additional_data # [int] information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
         type            # [string] = "MouseEvent"
   
-You **have to run a message loop** to use a hook\! \(see *Running a message loop* below\)  
+You **have to run a message loop** to use a hook\! \(see **\[Running a message loop\]** below\)  
   
 Remember to unhook when you're done capturing by using:  
 
@@ -134,7 +134,7 @@ If you want to import all the VK codes without performing a package\-wide wildca
   
 You can also convert the virtual key codes to a literal representation using a predefined dict\.  
 
-    vk_code_dict.get(vk_code, "Unknown VK code") -> string
+    vk_code_dict.get(vk_code, "VK_UNKNOWN") -> string
   
   
   
@@ -182,7 +182,7 @@ To press a key, you can use
   
 to release it, you can use  
 
-    release_key(ck_code)
+    release_key(vk_code)
   
 and to press and release it, you can use  
 

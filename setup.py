@@ -23,7 +23,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='winput',
     
-    version='1.2.0',
+    version='1.2.1',
 
     description='Capture and send keyboard and mouse input',
     
@@ -61,9 +61,10 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     
-    keywords='record send input mouse keyboard keys hook hooks pyhook windows user32.dll user32',
+    keywords='record send input cursor mouse keyboard keys hook hooks pyhook windows user32.dll user32',
     
     packages=["winput"],
 )

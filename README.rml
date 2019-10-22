@@ -1,6 +1,6 @@
 [title]winput[/]
 [subtitle]Capture and send keyboard and mouse input on Windows[/]
-[b]winput[/] is a small [b]extension[/] gives you the ability to [b]capture[/] and [b]send[/] any [b]keyboard and mouse input[/].
+[b]winput[/] is a small [b]extension[/] that gives you the ability to [b]capture[/] and [b]send[/] any [b]keyboard and mouse input[/].
 It does this by providing a [b]simple interface[/] to [b]user32.dll[/]
 
 [s1]Tiny documentation[/]
@@ -9,7 +9,7 @@ It does this by providing a [b]simple interface[/] to [b]user32.dll[/]
 [b]winput[/] is supposed to [b]replace[/] the outdated extension [url=https://pypi.org/project/pyHook/]PyHook[/].
 
 [s2]Using winput[/]
-To install winput you can use the PyPI:
+To install winput you can use the [url=https://packaging.python.org/tutorials/installing-packages/]PyPI[/url]:
 [code]pip install winput[/]
 To use winput in a script, you have to import the package [code]winput[/] using
 [code]import winput[/]
@@ -28,11 +28,11 @@ the state of the mouse changes:
 The function will be supplied with a [b]MouseEvent[/] as it's only argument.
 [code]class MouseEvent:
     position        # \[length-2-tuple\] the screen coordinates at which the event occured
-    action          # \[int\] which type of event occured - can be any of the mouse-wParams
+    action          # \[int\] which type of event occured - can be any of the mouse-wParams (see below)
     time            # \[int\] time in ms since system startup
-    additional_data # \[int\] additional information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
+    additional_data # \[int\] information for specific mouse events (which X-Button, amount of mouse-wheel-movement)
     type            # \[string\] = "MouseEvent"[/]
-You [b]have to run a message loop[/] to use a hook! (see [i]Running a message loop[/] below)
+You [b]have to run a message loop[/] to use a hook! (see [b]\[Running a message loop\][/] below)
 
 Remember to unhook when you're done capturing by using:
 [code]unhook_mouse()[/]
@@ -101,7 +101,7 @@ If you want to import all the VK codes without performing a package-wide wildcar
 [code]from winput.vk_codes import *[/]
 
 You can also convert the virtual key codes to a literal representation using a predefined dict.
-[code]vk_code_dict.get(vk_code, "Unknown VK code") -> string[/]
+[code]vk_code_dict.get(vk_code, "VK_UNKNOWN") -> string[/]
 
 
 [s3]Sending mouse input[/]
@@ -133,7 +133,7 @@ The mousewheel can be moved using
 To press a key, you can use
 [code]press_key(vk_code)[/]
 to release it, you can use
-[code]release_key(ck_code)[/]
+[code]release_key(vk_code)[/]
 and to press and release it, you can use
 [code]click_key(vk_code)[/]
 

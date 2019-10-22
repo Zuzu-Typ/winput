@@ -1,3 +1,32 @@
+"""
+winput
+
+Capture and send keyboard and mouse input on Windows
+
+---------------------
+LICENSE (zlib/libpng)
+---------------------
+zlib/libpng license
+
+Copyright (c) 2017 Zuzu_Typ
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+"""
+
 import ctypes
 from sys import getwindowsversion
 from ctypes import wintypes
@@ -209,11 +238,11 @@ def _issue_mouse_event(dwFlags = 0x0001, dx = 0, dy = 0, mouseData = 0x000):
                mi=MOUSEINPUT(dx = dx, dy = dy, dwFlags = dwFlags, mouseData = mouseData))
     user32.SendInput(1, ctypes.byref(me), ctypes.sizeof(me))
 
-LEFT_MOUSE_BUTTON = LMB = 1
-MIDDLE_MOUSE_BUTTON = MMB = 2
-RIGHT_MOUSE_BUTTON = RMB = 4
-EXTRA_MOUSE_BUTTON1 = XMB1 = 8
-EXTRA_MOUSE_BUTTON2 = XMB2 = 16
+LEFT_MOUSE_BUTTON   = LMB   = 1
+MIDDLE_MOUSE_BUTTON = MMB   = 2
+RIGHT_MOUSE_BUTTON  = RMB   = 4
+EXTRA_MOUSE_BUTTON1 = XMB1  = 8
+EXTRA_MOUSE_BUTTON2 = XMB2  = 16
 
 def set_mouse_pos(x, y):
     """set_mouse_pos(x, y) -> success
@@ -222,7 +251,7 @@ Moves the cursor to the given coordinates."""
 
 def get_mouse_pos():
     """get_mouse_pos() -> (x, y)
-Getss the current cursor position"""
+Gets the current cursor position"""
     pt = POINT()
     user32.GetCursorPos(ctypes.byref(pt))
     return (pt.x, pt.y)

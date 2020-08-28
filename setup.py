@@ -23,7 +23,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='winput',
     
-    version='1.2.1',
+    version='1.2.2',
 
     description='Capture and send keyboard and mouse input',
     

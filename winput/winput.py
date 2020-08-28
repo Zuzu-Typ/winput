@@ -39,16 +39,19 @@ except ImportError:
     import vk_codes
 
 class MouseEvent:
+    type = "MouseEvent"
     def __init__(self, position, action, time, *additional_data):
-        self.position = position
+        self.position = self.pos = position
+        self.x, self.y = self.pos
         self.action = action
         self.time = time
         self.additional_data = additional_data
 
 class KeyboardEvent:
+    type = "KeyboardEvent"
     def __init__(self, action, vkCode, time):
         self.action = action
-        self.vkCode = vkCode
+        self.key = self.vk_code = self.vkCode = vkCode
         self.time = time
 
 user32 = ctypes.windll.user32

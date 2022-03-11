@@ -40,7 +40,7 @@ except ImportError:
 
 class MouseEvent:
     type = "MouseEvent"
-    def __init__(self, position, action, time, *additional_data):
+    def __init__(self, position, action, time, additional_data = None):
         self.position = self.pos = position
         self.x, self.y = self.pos
         self.action = action
@@ -214,8 +214,8 @@ def _LowLevelMouseProc(nCode, wParam, lParam, cbfunc):
         x = GET_HWORD(lParam.contents.mouseData)
         cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, x))
         
-    elif wParam == WM_MOUSEWHEEL: # used scrollwheel
-        cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, GET_HWORD(lParam.contents.mouseData) / WHEEL_DELTA))      
+    elif wParam == WM_MOUSEWHEEL or wParam == WM_MOUSEHWHEEL: # used scrollwheel
+        cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, GET_HWORD(lParam.contents.mouseData) // WHEEL_DELTA))       
         
     else:
         cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time))
@@ -284,7 +284,7 @@ def release_mouse_button(mouse_button=LMB):# releases the given mouse button
               0x0040 if mouse_button == MMB else \
               0x0100
 
-    if dwFlags == 0x0080:
+    if dwFlags == 0x0100:
         mouseData = 0x1 if mouse_button == XMB1 else 0x2
     else:
         mouseData = 0
@@ -298,7 +298,7 @@ def click_mouse_button(mouse_button=LMB): # presses and releases the given mouse
 def move_mousewheel(amount, horizontal = False): # moves the mousewheel by the specified amount
     assert type(amount) == int, "amount has to be an integer"
     
-    _issue_mouse_event(0x0800 if not horizontal else 0x1000, 0, 0, amount)
+    _issue_mouse_event(0x0800 if not horizontal else 0x1000, 0, 0, amount * WHEEL_DELTA)
 
 def move_mouse(dx, dy): # moves the mouse by the specified amount in pixels
     assert type(dx) == type(dy) == int, "dx and dy have to be integers"

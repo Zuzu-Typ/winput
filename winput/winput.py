@@ -142,6 +142,21 @@ PM_NOREMOVE = 0x0000
 PM_REMOVE = 0x0001
 PM_QS_INPUT = (QS_INPUT << 16)
 
+PROCESS_DPI_UNAWARE           = 0
+PROCESS_SYSTEM_DPI_AWARE      = 1
+PROCESS_PER_MONITOR_DPI_AWARE = 2
+
+MDT_EFFECTIVE_DPI   = 0
+MDT_ANGULAR_DPI     = 1
+MDT_RAW_DPI         = 2
+
+LOGPIXELSX = 88
+LOGPIXELSY = 90
+
+MONITOR_DEFAULTTONULL       = 0x00000000
+MONITOR_DEFAULTTOPRIMARY    = 0x00000001
+MONITOR_DEFAULTTONEAREST    = 0x00000002
+
 class MOUSEINPUT(ctypes.Structure):
     _fields_ = (("dx",          wintypes.LONG),
                 ("dy",          wintypes.LONG),
@@ -349,3 +364,31 @@ def unhook_mouse(): # remove hook from mouse event queue
 def unhook_keyboard(): # remove hook from keyboard event queue
     global keyboard_hook
     user32.UnhookWindowsHookEx(keyboard_hook)
+
+def set_DPI_aware(per_monitor=True): # make this process DPI aware
+    shcore = ctypes.windll.shcore
+    
+    if hasattr(shcore, "SetProcessDpiAwareness"):
+        shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE if per_monitor else PROCESS_SYSTEM_DPI_AWARE)
+    elif hasattr(shcore, "SetProcessDPIAware"):
+        shcore.SetProcessDPIAware()
+
+def get_window_scaling_factor(hwnd): # gets the DPI scaling factor for the given window (may require DPI awareness)
+    if hasattr(user32, "GetDpiForWindow"):
+        return user32.GetDpiForWindow(hwnd) / 96.0
+    if hasattr(ctypes.windll.shcore, "GetDpiForMonitor"):
+        hmonitor = user32.MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
+        dpiX = ctypes.c_uint()
+        dpiY = ctypes.c_uint()
+        hres = ctypes.windll.shcore.GetDpiForMonitor(hmonitor, MDT_EFFECTIVE_DPI, ctypes.byref(dpiX), ctypes.byref(dpiY))
+
+        assert hres == 0
+
+        return dpiX.value / 96.0
+    if hasattr(ctypes.windll.gdi32, "GetDeviceCaps"):
+        hdc = user32.GetDC(hwnd)
+        out = ctypes.windll.gdi32.GetDeviceCaps(hdc, LOGPIXELSX) / 96.0
+
+    return 1.0
+        
+        

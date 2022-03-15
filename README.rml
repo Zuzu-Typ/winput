@@ -108,6 +108,8 @@ You can also convert the virtual key codes to a literal representation using a p
 To set the position of the mouse cursor, you can use
 [code]set_mouse_pos(x, y)[/]
 
+To make sure this also works with high DPI values, please use the DPI awareness functions below.
+
 To move the mouse cursor by a given amount, you can use
 [code]move_mouse(dx, dy)[/]
 
@@ -137,6 +139,13 @@ to release it, you can use
 and to press and release it, you can use
 [code]click_key(vk_code)[/]
 
+
+[s3]DPI awareness[/]
+To make the process running winput DPI aware, use the following function:
+[code]set_DPI_aware(per_monitor=True)[/]
+
+To get the DPI scaling factor for a given window handle (HWND), use
+[code]get_window_scaling_factor(hwnd)[/]
 
 [s2]Example[/]
 [s3]Capturing the mouse and keyboard[/]

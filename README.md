@@ -144,6 +144,8 @@ To set the position of the mouse cursor, you can use
     set_mouse_pos(x, y)
   
   
+To make sure this also works with high DPI values, please use the DPI awareness functions below\.  
+  
 To move the mouse cursor by a given amount, you can use  
 
     move_mouse(dx, dy)
@@ -188,6 +190,17 @@ and to press and release it, you can use
 
     click_key(vk_code)
   
+  
+  
+#### DPI awareness  
+To make the process running winput DPI aware, use the following function:  
+
+    set_DPI_aware(per_monitor=True)
+  
+  
+To get the DPI scaling factor for a given window handle \(HWND\), use  
+
+    get_window_scaling_factor(hwnd)
   
   
 ### Example  

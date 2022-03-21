@@ -20,7 +20,7 @@ jobs:
         python -m pip install --upgrade pip setuptools
         python -m pip install build wheel
     - name: Build package
-      run: python -m build -s -n
+      run: python -m build -n
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
       with:

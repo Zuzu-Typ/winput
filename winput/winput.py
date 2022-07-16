@@ -31,6 +31,8 @@ import ctypes
 from sys import getwindowsversion
 from ctypes import wintypes
 
+from typing import Callable, Optional, Tuple
+
 try:
     from .vk_codes import *
     from . import vk_codes
@@ -40,7 +42,7 @@ except ImportError:
 
 class MouseEvent:
     type = "MouseEvent"
-    def __init__(self, position, action, time, additional_data = None):
+    def __init__(self, position : Tuple[int, int], action : int, time : int, additional_data = None):
         self.position = self.pos = position
         self.x, self.y = self.pos
         self.action = action
@@ -49,10 +51,15 @@ class MouseEvent:
 
 class KeyboardEvent:
     type = "KeyboardEvent"
-    def __init__(self, action, vkCode, time):
+    def __init__(self, action : int, vkCode : int, time : int):
         self.action = action
         self.key = self.vk_code = self.vkCode = vkCode
         self.time = time
+
+WP_CONTINUE             = 0x00
+WP_UNHOOK               = 0x01
+WP_STOP                 = 0x02
+WP_DONT_PASS_INPUT_ON   = 0x04
 
 user32 = ctypes.windll.user32
 
@@ -224,20 +231,57 @@ class KBDLLHOOKSTRUCT(ctypes.Structure):
                 ("time", wintypes.DWORD),
                 ("dwExtraInfo", ULONG_PTR)]
 
-def _LowLevelMouseProc(nCode, wParam, lParam, cbfunc):
+def _LowLevelMouseProc(nCode : int, wParam : int, lParam : int, cbfunc : Callable[[MouseEvent], Optional[int]]):
+    if nCode < 0: # error passthrough
+        return user32.CallNextHookEx(0, nCode, wParam, lParam)
+
+    extra_data = None
+
     if wParam in (WM_XBUTTONDOWN, WM_XBUTTONUP): # X button changed state
-        x = GET_HWORD(lParam.contents.mouseData)
-        cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, x))
+        extra_data = GET_HWORD(lParam.contents.mouseData)
         
     elif wParam == WM_MOUSEWHEEL or wParam == WM_MOUSEHWHEEL: # used scrollwheel
-        cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, GET_HWORD(lParam.contents.mouseData) // WHEEL_DELTA))       
-        
-    else:
-        cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time))
+        extra_data = GET_HWORD(lParam.contents.mouseData) // WHEEL_DELTA
+
+    result = cbfunc(MouseEvent((lParam.contents.pt.x, lParam.contents.pt.y), wParam, lParam.contents.time, extra_data))
+
+    if result is None:
+        result = WP_CONTINUE
+
+    assert type(result) == int
+
+    if result & WP_UNHOOK:
+        global mouse_hook
+        user32.UnhookWindowsHookEx(mouse_hook)
+
+    if result & WP_STOP:
+        user32.PostQuitMessage(0)
+
+    if result & WP_DONT_PASS_INPUT_ON:
+        return -1
+
     return user32.CallNextHookEx(0, nCode, wParam, lParam)
 
-def _LowLevelKeyboardProc(nCode, wParam, lParam, cbfunc):
-    cbfunc(KeyboardEvent(wParam, lParam.contents.vkCode, lParam.contents.time))
+def _LowLevelKeyboardProc(nCode : int, wParam : int, lParam : int, cbfunc : Callable[[KeyboardEvent], Optional[int]]):
+    if nCode < 0: # error passthrough
+        return user32.CallNextHookEx(0, nCode, wParam, lParam)
+
+    result = cbfunc(KeyboardEvent(wParam, lParam.contents.vkCode, lParam.contents.time))
+
+    if result is None:
+        result = WP_CONTINUE
+
+    assert type(result) == int
+
+    if result & WP_UNHOOK:
+        global keyboard_hook
+        user32.UnhookWindowsHookEx(keyboard_hook)
+
+    if result & WP_STOP:
+        user32.PostQuitMessage(0)
+
+    if result & WP_DONT_PASS_INPUT_ON:
+        return -1
 
     return user32.CallNextHookEx(0, nCode, wParam, lParam)
 
@@ -262,19 +306,21 @@ RIGHT_MOUSE_BUTTON  = RMB   = 4
 EXTRA_MOUSE_BUTTON1 = XMB1  = 8
 EXTRA_MOUSE_BUTTON2 = XMB2  = 16
 
-def set_mouse_pos(x, y):
+
+
+def set_mouse_pos(x : int, y : int) -> bool:
     """set_mouse_pos(x, y) -> success
 Moves the cursor to the given coordinates."""
-    return user32.SetCursorPos(x, y)
+    return bool(user32.SetCursorPos(x, y))
 
-def get_mouse_pos():
+def get_mouse_pos() -> Tuple[int, int]:
     """get_mouse_pos() -> (x, y)
 Gets the current cursor position"""
     pt = POINT()
     user32.GetCursorPos(ctypes.byref(pt))
     return (pt.x, pt.y)
 
-def press_mouse_button(mouse_button=LMB): # presses the given mouse button
+def press_mouse_button(mouse_button : int = LMB) -> None: # presses the given mouse button
     if(not (LMB <= mouse_button <= XMB2)):
         raise AssertionError("invalid mouse button")
     
@@ -290,7 +336,7 @@ def press_mouse_button(mouse_button=LMB): # presses the given mouse button
         
     _issue_mouse_event(dwFlags, 0, 0, mouseData)
 
-def release_mouse_button(mouse_button=LMB):# releases the given mouse button
+def release_mouse_button(mouse_button : int = LMB) -> None:# releases the given mouse button
     if(not (LMB <= mouse_button <= XMB2)):
         raise AssertionError("invalid mouse button")
     
@@ -306,66 +352,66 @@ def release_mouse_button(mouse_button=LMB):# releases the given mouse button
         
     _issue_mouse_event(dwFlags, 0, 0, mouseData)
 
-def click_mouse_button(mouse_button=LMB): # presses and releases the given mouse button
+def click_mouse_button(mouse_button : int = LMB) -> None: # presses and releases the given mouse button
     press_mouse_button(mouse_button)
     release_mouse_button(mouse_button)
 
-def move_mousewheel(amount, horizontal = False): # moves the mousewheel by the specified amount
+def move_mousewheel(amount : int, horizontal : bool = False) -> None: # moves the mousewheel by the specified amount
     assert type(amount) == int, "amount has to be an integer"
     
     _issue_mouse_event(0x0800 if not horizontal else 0x1000, 0, 0, amount * WHEEL_DELTA)
 
-def move_mouse(dx, dy): # moves the mouse by the specified amount in pixels
+def move_mouse(dx : int, dy : int) -> None: # moves the mouse by the specified amount in pixels
     assert type(dx) == type(dy) == int, "dx and dy have to be integers"
     
     _issue_mouse_event(0x0001, dx, dy, 0)
 
-def press_key(vk_code): # presses the given key
+def press_key(vk_code : int) -> None: # presses the given key
     x = INPUT(type=INPUT_KEYBOARD,
               ki=KEYBDINPUT(wVk=vk_code))
     user32.SendInput(1, ctypes.byref(x), ctypes.sizeof(x))
 
-def release_key(vk_code): # releases the given key
+def release_key(vk_code : int) -> None: # releases the given key
     x = INPUT(type=INPUT_KEYBOARD,
               ki=KEYBDINPUT(wVk=vk_code,
                             dwFlags=KEYEVENTF_KEYUP))
     user32.SendInput(1, ctypes.byref(x), ctypes.sizeof(x))
 
-def click_key(vk_code): # presses and releases the given key
+def click_key(vk_code : int) -> None: # presses and releases the given key
     press_key(vk_code)
     release_key(vk_code)
 
-def hook_mouse(func): # hook onto mouse event queue
+def hook_mouse(func : Callable[[MouseEvent], Optional[int]]) -> None: # hook onto mouse event queue
     global mouse_hook_func, mouse_hook
     mouse_hook_func = LLMouseProc(lambda x, y, z: _LowLevelMouseProc(x, y, z, func))
     mouse_hook = user32.SetWindowsHookExA(WH_MOUSE_LL, mouse_hook_func, None, 0)
 
-def hook_keyboard(func): # hook onto keyboard event queue
+def hook_keyboard(func : Callable[[KeyboardEvent], Optional[int]]) -> None: # hook onto keyboard event queue
     global keyboard_hook_func, keyboard_hook
     keyboard_hook_func = LLKeyboardProc(lambda x, y, z: _LowLevelKeyboardProc(x, y, z, func))
     keyboard_hook = user32.SetWindowsHookExA(WH_KEYBOARD_LL, keyboard_hook_func, None, 0)
     
-def wait_messages(): # enter message loop
+def wait_messages() -> None: # enter message loop
     msg = wintypes.MSG()
     while user32.GetMessageA(ctypes.pointer(msg), None, 0, 0):
         pass
 
-def get_message(): # get pending messages
+def get_message() -> bool: # get pending messages
     msg = wintypes.MSG()
-    return user32.PeekMessageA(ctypes.pointer(msg), None, 0, 0, PM_REMOVE)
+    return bool(user32.PeekMessageA(ctypes.pointer(msg), None, 0, 0, PM_REMOVE))
 
-def stop(): # stop message loop
+def stop() -> None: # stop message loop
     user32.PostQuitMessage(0)
 
-def unhook_mouse(): # remove hook from mouse event queue
+def unhook_mouse() -> None: # remove hook from mouse event queue
     global mouse_hook
     user32.UnhookWindowsHookEx(mouse_hook)
 
-def unhook_keyboard(): # remove hook from keyboard event queue
+def unhook_keyboard() -> None: # remove hook from keyboard event queue
     global keyboard_hook
     user32.UnhookWindowsHookEx(keyboard_hook)
 
-def set_DPI_aware(per_monitor=True): # make this process DPI aware
+def set_DPI_aware(per_monitor : bool = True) -> None: # make this process DPI aware
     shcore = ctypes.windll.shcore
     
     if hasattr(shcore, "SetProcessDpiAwareness"):
@@ -373,7 +419,7 @@ def set_DPI_aware(per_monitor=True): # make this process DPI aware
     elif hasattr(shcore, "SetProcessDPIAware"):
         shcore.SetProcessDPIAware()
 
-def get_window_scaling_factor(hwnd): # gets the DPI scaling factor for the given window (may require DPI awareness)
+def get_window_scaling_factor(hwnd : int) -> float: # gets the DPI scaling factor for the given window (may require DPI awareness)
     if hasattr(user32, "GetDpiForWindow"):
         return user32.GetDpiForWindow(hwnd) / 96.0
     if hasattr(ctypes.windll.shcore, "GetDpiForMonitor"):

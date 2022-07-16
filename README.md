@@ -104,8 +104,23 @@ The following keyboard\-wParams exist:
     WM_SYSKEYUP     = 0x0105 # system-key released
     
   
+
+#### Return values for callback functions
+The callback (hook) functions mentioned above are expected to return a **flag**.
+The following flags exist:
+
+Flag | Value | Meaning
+-----|-------|--------
+`WP_CONTINUE` | `0x00` | Continue normally
+`WP_UNHOOK` | `0x01` | Remove this hook
+`WP_STOP` | `0x02` | Stops the message loop
+`WP_DONT_PASS_INPUT_ON` | `0x04` | Does not call any other hooks (i.e. input isn't passed on to other programs)
+
+If the callback function returns `None`, `WP_CONTINUE` is assumed.  
   
-  
+**WARNING:** Using `WP_DONT_PASS_INPUT_ON` will also prevent the inputs to be passed on to Windows. If you do this for a mouse hook, the mouse will **not move** and you might loose control over your computer. Same goes for keyboard hooks. The keyboard events will **not be passed on** to the rest of your system. You may loose control over your computer.
+
+
 #### Running a message loop  
 If you're using a hook, you have to keep updating the Windows messages\.  
 You can either do this by using   
@@ -205,78 +220,97 @@ To get the DPI scaling factor for a given window handle \(HWND\), use
   
 ### Example  
 #### Capturing the mouse and keyboard  
+```Python
+import winput
 
+def mouse_callback( event ):
+    if event.action == winput.WM_LBUTTONDOWN:
+        print("Left mouse button press at {}".format( event.position ))
     
-    import winput
-    
-    def mouse_callback( event ):
-        if event.action == winput.WM_LBUTTONDOWN:
-            print("Left mouse button press at {}".format( event.position ))
+def keyboard_callback( event ):
+    if event.vkCode == winput.VK_ESCAPE: # quit on pressing escape
+        return winput.WP_STOP
+        # alternatively you could also call:
+        # winput.stop()
         
-    def keyboard_callback( event ):
-        if event.vkCode == winput.VK_ESCAPE: # quit on pressing escape
-            winput.stop()
-            
-    print("Press escape to quit")
-        
-    # hook input    
-    winput.hook_mouse( mouse_callback )
-    winput.hook_keyboard( keyboard_callback )
+print("Press escape to quit")
     
-    # enter message loop
-    winput.wait_messages()
-    
-    # remove input hook
-    winput.unhook_mouse()
-    winput.unhook_keyboard()
-    
+# hook input    
+winput.hook_mouse( mouse_callback )
+winput.hook_keyboard( keyboard_callback )
+
+# enter message loop
+winput.wait_messages()
+
+# remove input hook
+winput.unhook_mouse()
+winput.unhook_keyboard()
+``` 
+
+#### Capturing keyboard without passthrough
+```Python
+import winput
+
+def keyboard_callback(event : winput.KeyboardEvent) -> int:
+  if event.key == winput.VK_ESCAPE:
+    print("quitting")
+    return winput.WP_UNHOOK | winput.WP_STOP
+	
+  print(winput.vk_code_dict.get(event.key, "VK_UNKNOWN"))
+  
+  return winput.WP_DONT_PASS_INPUT_ON
+  
+winput.hook_keyboard(keyboard_callback)
+winput.wait_messages()
+```
+
   
 #### Sending input  
 
-    
-    import winput
-    from winput.vk_codes import *
-    
-    import time
-    
-    def slow_click(vk_code): # delay each keypress by 1/10 of a second
-        time.sleep(0.1)
-        winput.click_key(vk_code)
-    
-    # open the RUN menu (WIN + R)
-    winput.press_key(VK_LWIN)
-    winput.click_key(VK_R)
-    winput.release_key(VK_LWIN)
-    
-    time.sleep(0.5)
-    
-    # enter "notepad.exe"
-    slow_click(VK_N)
-    slow_click(VK_O)
-    slow_click(VK_T)
-    slow_click(VK_E)
-    slow_click(VK_P)
-    slow_click(VK_A)
-    slow_click(VK_D)
-    slow_click(VK_OEM_PERIOD)
-    slow_click(VK_E)
-    slow_click(VK_X)
-    slow_click(VK_E)
-    slow_click(VK_RETURN)
-    
-    time.sleep(1)
-    
-    # enter "hello world"
-    slow_click(VK_H)
-    slow_click(VK_E)
-    slow_click(VK_L)
-    slow_click(VK_L)
-    slow_click(VK_O)
-    slow_click(VK_SPACE)
-    slow_click(VK_W)
-    slow_click(VK_O)
-    slow_click(VK_R)
-    slow_click(VK_L)
-    slow_click(VK_D)
-    
+```Python
+import winput
+from winput.vk_codes import *
+
+import time
+
+def slow_click(vk_code): # delay each keypress by 1/10 of a second
+    time.sleep(0.1)
+    winput.click_key(vk_code)
+
+# open the RUN menu (WIN + R)
+winput.press_key(VK_LWIN)
+winput.click_key(VK_R)
+winput.release_key(VK_LWIN)
+
+time.sleep(0.5)
+
+# enter "notepad.exe"
+slow_click(VK_N)
+slow_click(VK_O)
+slow_click(VK_T)
+slow_click(VK_E)
+slow_click(VK_P)
+slow_click(VK_A)
+slow_click(VK_D)
+slow_click(VK_OEM_PERIOD)
+slow_click(VK_E)
+slow_click(VK_X)
+slow_click(VK_E)
+slow_click(VK_RETURN)
+
+time.sleep(1)
+
+# enter "hello world"
+slow_click(VK_H)
+slow_click(VK_E)
+slow_click(VK_L)
+slow_click(VK_L)
+slow_click(VK_O)
+slow_click(VK_SPACE)
+slow_click(VK_W)
+slow_click(VK_O)
+slow_click(VK_R)
+slow_click(VK_L)
+slow_click(VK_D)
+```
   

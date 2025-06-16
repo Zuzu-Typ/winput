@@ -1,17 +1,22 @@
-# winput  
-## Capture and send keyboard and mouse input on Windows  
-**winput** is a small **extension** that gives you the ability to **capture** and **send** any **keyboard and mouse input**\.  
-It does this by providing a **simple interface** to **user32\.dll**  
+# winput
+
+winput provides a simple Python interface for capturing or sending keyboard and mouse input on Windows. It wraps functions from `user32.dll` so you can listen to events or automate input.
+
+> **Warning**
+> Do not record a user's input without their permission.
+
   
-## Tiny documentation  
-### About winput  
+## About winput  
 **winput must not be used to record the user's input without their consent\!**  
 **winput** is supposed to **replace** the outdated extension [PyHook](https://pypi.org/project/pyHook/)\.  
   
-### Using winput  
-To install winput you can use the [PyPI](https://packaging.python.org/tutorials/installing-packages/):  
+## Installation
+
+Install from PyPI:
 
     pip install winput
+
+## Basic usage
   
 To use winput in a script, you have to import the package `winput` using  
 
@@ -22,6 +27,24 @@ or a wildcard import:
     from winput import *
   
   
+
+Here is a minimal example that prints every pressed key until Escape is hit:
+
+```python
+import winput
+
+
+def on_key(event: winput.KeyboardEvent) -> int:
+    print(event.vkCode)
+    if event.vkCode == winput.VK_ESCAPE:
+        return winput.WP_STOP
+
+winput.hook_keyboard(on_key)
+winput.wait_messages()
+```
+
+See the [examples](examples/) directory for more scripts.
+
   
 #### Capturing mouse input  
 There are two ways you can get input from the mouse\.  

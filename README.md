@@ -41,6 +41,7 @@ def on_key(event: winput.KeyboardEvent) -> int:
 
 winput.hook_keyboard(on_key)
 winput.wait_messages()
+winput.unhook_keyboard()
 ```
 
 See the [examples](examples/) directory for more scripts.

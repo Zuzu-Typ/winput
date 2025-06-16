@@ -433,7 +433,10 @@ def get_window_scaling_factor(hwnd : int) -> float: # gets the DPI scaling facto
         return dpiX.value / 96.0
     if hasattr(ctypes.windll.gdi32, "GetDeviceCaps"):
         hdc = user32.GetDC(hwnd)
-        out = ctypes.windll.gdi32.GetDeviceCaps(hdc, LOGPIXELSX) / 96.0
+        try:
+            return ctypes.windll.gdi32.GetDeviceCaps(hdc, LOGPIXELSX) / 96.0
+        finally:
+            user32.ReleaseDC(hwnd, hdc)
 
     return 1.0
         
